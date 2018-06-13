@@ -3,7 +3,6 @@
 #define MAX_BUF 128
 #define MAX_ARGUMENT 2
 
-//define circular queue struct
 struct CQueue {
     int *array;
     int front;
@@ -12,7 +11,11 @@ struct CQueue {
     int capacity;
 };
 
-//Function needed for the queue
+struct commandline_t{
+    char buf[MAX_BUF];
+    int arguments[MAX_ARGUMENT];
+};
+
 void CreateCircularQ(struct CQueue **Q, int max){
     *Q = (struct CQueue *)malloc(sizeof(struct CQueue));
     (*Q)->capacity = max;
@@ -41,18 +44,29 @@ int Succ(int value, struct CQueue **Q){
     return value;
 }
 void PrintAll(struct CQueue **Q){
-    printf("%d\t%d\t%d\t%d\t%d\t", (*Q)->array[0],(*Q)->array[1],
-(*Q)->array[2],(*Q)->array[3],(*Q)->array[4]);
-    printf("f: %d, r: %d\n", (*Q)->array[(*Q)->front], (*Q)->array[(*Q)->rear]);
+    int front = (*Q)->front;
+    int rear = (*Q)->rear;
+    if(front < rear){
+        for(int i=front;i<rear;i++){
+            printf("%d\t", (*Q)->array[i]);
+        }
+    }else if(front > rear || IsFull(Q)){
+        for(int i=front;i<(*Q)->capacity;i++){
+            printf("%d\t", (*Q)->array[i]);
+        }
+        for(int i=0;i<rear;i++){
+            printf("%d\t", (*Q)->array[i]);
+        }
+    }
+    printf("f: %d, r: %d\n", front, rear);
 }
 
 void Dequeue(struct CQueue **Q){
     if(IsEmpty(Q)){
-        printf("ERROR: The queue is empty.\n");
+       printf("ERROR: The queue is empty.\n");
     }else{
        (*Q)->size--;
-       (*Q)->array[(*Q)->front] = 0;
-       (*Q)->front = Succ((*Q)->front, Q);
+       (*Q)->front = Succ(((*Q)->front)++, Q);
        printf("Dequeued:\t");
        PrintAll(Q);
     }
@@ -61,14 +75,9 @@ void Enqueue(struct CQueue **Q, int new){
     if(IsFull(Q)){
         printf("ERROR:The queue is Full.\n");
     }else{
-        if(IsEmpty(Q)){
-            (*Q)->size++;
-            (*Q)->array[(*Q)->rear] = new;   
-        }else{
-            (*Q)->size++;
-            (*Q)->rear = Succ((*Q)->rear, Q);
-            (*Q)->array[(*Q)->rear] = new;
-        }
+        (*Q)->size++;
+        (*Q)->array[(*Q)->rear] = new;
+        (*Q)->rear = Succ(((*Q)->rear)++, Q);
     }
     printf("Enqueued:\t");
     PrintAll(Q);
@@ -87,17 +96,12 @@ void DeleteQueue(struct CQueue **Q){
 
 void MakeEmpty(struct CQueue **Q){
     (*Q)->size = 0;
-    (*Q)->front = 1;
+    (*Q)->front = 0;
     (*Q)->rear = 0;
 }
-//Structure and Function for user input and print
-struct commandline_t{
-    char buf[MAX_BUF];
-    int arguments[MAX_ARGUMENT];
-};
+
 void ParseCommandLine(struct commandline_t *commandline, struct CQueue **Q){
     char command = commandline->buf[0];
-    //int num = commandline->buf[2] - 48;
     int num;
     switch(command){
         case 'e': 
