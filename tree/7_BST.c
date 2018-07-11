@@ -3,18 +3,13 @@
 #define MAX_BUF 128
 #define MAX_ARGUMENT 3
 
-//structure
-struct Tree
-{
+struct Tree{
 	int element;
 	struct Tree *left;
 	struct Tree *right;
 };
 
-//BST functions
-
-struct Tree *InsertNode(int key, struct Tree *tree)
-{
+struct Tree *InsertNode(int key, struct Tree *tree){
     if(tree == NULL){
         tree = (struct Tree *)malloc(sizeof(struct Tree));
         tree->element = key;
@@ -38,9 +33,6 @@ struct Tree *FindMax(struct Tree *tree){
     }
     return tree;
 }
-
-struct Tree *FindMaxParent(struct Tree *tree){
-  }
 
 struct Tree *FindNode(int key, struct Tree *tree){
     if(tree == NULL){
@@ -79,7 +71,7 @@ struct Tree *DeleteNode(int key, struct Tree *tree){
                 struct Tree *right = tree->right;
                 free(tree);
                 return right;
-            /* leaf! */
+            /* leaf */
             } else {
                 free(tree);
                 return NULL;
@@ -91,39 +83,6 @@ struct Tree *DeleteNode(int key, struct Tree *tree){
     }
 }
 
-/* void DeleteNode(int key, struct Tree **tree){ */
-    /* struct Tree *delTree = FindParentOfDelNode(key, *tree); */
-    /* if(delTree == NULL){ */
-        /* printf("Element %d not found\n", key); */
-        /* return; */
-    /* } */
-    
-    /* [> leaf node <] */
-    /* if(delTree->left == NULL && delTree->right == NULL){ */
-        /* while((*tree)->right->right != NULL && (*tree)->right->left != NULL){ */
-            /* (*tree)->right->right  */
-        /* }; //when it is a leaf node, find its parent, disconnect, free  */
-    /* }else if(delTree->left == NULL){ */
-        /* // when it has a right child only */
-        /* delTree = delTree->right; */
-    /* }else if(delTree->right == NULL){ */
-        /* // when it has a left child only */
-        /* delTree = delTree->left; */
-    /* }else{ */
-        /* // Two child */
-        /* if(*tree != NULL){ */
-            /* while((*tree)->right->right != NULL) */
-                /* (*tree) = (*tree)->right; */
-            /* if((*tree)->right->left == NULL){ */
-                /* (*tree)->right = NULL; //right-most has no left child */
-            /* }else{ */
-                /* (*tree)->right = (*tree)->right->left; */
-                /* (*tree)->right->left = NULL;//right-most has a left child */
-            /* } */
-        /* } */
-    /* } */
-/* } */
-
 void PrintInorder(struct Tree *tree){
     if(tree->left != NULL){
         PrintInorder(tree->left);
@@ -132,8 +91,8 @@ void PrintInorder(struct Tree *tree){
     if(tree->right != NULL){
         PrintInorder(tree->right);
     }
-
 }
+
 void PrintPreorder(struct Tree *tree){
     printf("%d\t", tree->element);
     if(tree->left !=NULL){
@@ -143,21 +102,17 @@ void PrintPreorder(struct Tree *tree){
         PrintPreorder(tree->right);
     }
 }
+
 void PrintPostorder(struct Tree *tree){
     if(tree->left !=NULL){
         PrintPostorder(tree->left);
-        //printf("%d\t",(tree->left)->element);
-    }else{
-        //printf("%d\t",tree->element);
     }
     if(tree->right !=NULL){
         PrintPostorder(tree->right);
-        //printf("%d\t", (tree->right)->element);
     }
     printf("%d\t", tree->element);
 }
 
-//Parse commandline character into BST Function
 struct commandline_t 
 {
 	char buf[MAX_BUF];
@@ -183,16 +138,15 @@ void ParseCommandLine(struct commandline_t *commandline, struct Tree **tree){
             break;
 		case 'p':
 			sscanf(commandline->buf, "%*c%c", &letter);
-            if(letter=='i'){
+            if(letter =='i'){
                 PrintInorder(*tree);
                 printf("\n");
-			}else if(letter=='r'){
+			}else if(letter =='r'){
                 PrintPreorder(*tree);
                 printf("\n");
 			}else{
                 PrintPostorder(*tree);
                 printf("\n");
-
 			}
 			break;
 	}
@@ -206,7 +160,6 @@ int main(int argc, char const *argv[])
 			struct commandline_t commandline;
             struct Tree *tree = NULL;
 			while(fgets(commandline.buf, sizeof(commandline.buf), fp)){
-                //tree = (struct Tree *)malloc(sizeof(struct Tree));
 				ParseCommandLine(&commandline, &tree);
 			}
 		}else{
