@@ -7,6 +7,7 @@ struct Graph{
     int *indegree;
     int size;
 };
+
 struct Queue{
     int *array;
     int front;
@@ -14,18 +15,19 @@ struct Queue{
     int size;
     int capacity;
 };
+
 struct Graph *CreateGraph(char *vertices, char *edges){
     int size = vertices[strlen(vertices) - 2] - 48;
     struct Graph *graph = (struct Graph *)malloc(sizeof(struct Graph));
 
     graph->adj_matrix = (int **)malloc(sizeof(int *) * size);
-    for(int i=0; i<size; i++){
+    for(int i = 0; i < size; i++){
         graph->adj_matrix[i] = (int *)malloc(sizeof(int) * size);
     }
     
     graph->indegree = (int *)malloc(sizeof(int) * size);
     graph->size = size;
-    //인접행렬에 넣기 
+    // input vertices를 adjacent matrix로 나타내기.  
     int v1,v2;
     char *ptr = strtok(edges, " ");
     while(ptr != NULL){
@@ -36,8 +38,8 @@ struct Graph *CreateGraph(char *vertices, char *edges){
     }
     //indegree 계산하여 array에 넣기
     int indegree = 0;
-    for(int i=0; i<size; i++){
-        for(int j=0; j<size; j++){
+    for(int i = 0; i < size; i++){
+        for(int j = 0; j < size; j++){
             indegree += graph->adj_matrix[j][i];
         }
         graph->indegree[i] = indegree;
@@ -45,6 +47,7 @@ struct Graph *CreateGraph(char *vertices, char *edges){
     }
     return graph;
 }
+
 void CreateQueue(struct Queue **Q, int vertexNum){
     *Q = (struct Queue *)malloc(sizeof(struct Queue));
     (*Q)->array = (int *)malloc(sizeof(int) * vertexNum);
@@ -53,6 +56,7 @@ void CreateQueue(struct Queue **Q, int vertexNum){
     (*Q)->size = 0;
     (*Q)->capacity = vertexNum;
 }
+
 int IsEmpty(struct Queue **Q){
     if((*Q)->size == 0){
         return 1;
@@ -67,11 +71,13 @@ int IsFull(struct Queue **Q){
         return 0;
     }
 }
+
 int Succ(int value, struct Queue **Q){
     if(++value == (*Q)->capacity)
         value = 0;
     return value;
 }
+
 int Dequeue(struct Queue **Q){
     int value = 0;
     if(!IsEmpty(Q)){
@@ -81,6 +87,7 @@ int Dequeue(struct Queue **Q){
     }
     return value;
 }
+
 void Enqueue(struct Queue **Q, int new){
     if(!IsFull(Q)){
         (*Q)->size++;
@@ -88,11 +95,12 @@ void Enqueue(struct Queue **Q, int new){
         (*Q)->rear = Succ(((*Q)->rear)++, Q);
     }
 }
+
 void TopSort(struct Queue **queue, struct Graph **graph){
     int count = 0;
     int *result;
     result = (int *)malloc(sizeof(int) * (*graph)->size);
-    for(int i=0; i<(*graph)->size; i++){
+    for(int i = 0; i < (*graph)->size; i++){
         if((*graph)->indegree[i] == 0)
             Enqueue(queue, i+1);
     }
@@ -100,7 +108,7 @@ void TopSort(struct Queue **queue, struct Graph **graph){
         int vertex = Dequeue(queue);
         result[count] = vertex;
         count++;
-        for(int i=0; i<(*graph)->size; i++){
+        for(int i = 0; i < (*graph)->size; i++){
             if((*graph)->adj_matrix[vertex-1][i] == 1){
                 (*graph)->adj_matrix[vertex-1][i] = 0;
                 (*graph)->indegree[i] -= 1;
@@ -109,23 +117,25 @@ void TopSort(struct Queue **queue, struct Graph **graph){
             }
         }
     }   
-    // print output
-    for(int i=0; i<(*graph)->size; i++){
+    for(int i = 0; i < (*graph)->size; i++){
         printf("%d  ",result[i]);
     }
     printf("\n");
 }
+
 void DisposeQueue(struct Queue **Q){
     free((*Q)->array);
     free(*Q);
 }
+
 void DisposeGraph(struct Graph **G){
-    for(int i=0; i<(*G)->size; i++){
+    for(int i = 0; i < (*G)->size; i++){
         free((*G)->adj_matrix[i]);
     }
     free((*G)->indegree);
     free(*G);
 }
+
 int main(int argc, const char *argv[]){
     if(argc == 2){
         FILE *fp = fopen(argv[1], "r");
@@ -135,15 +145,14 @@ int main(int argc, const char *argv[]){
             char vertices[128];
             struct Graph *graph;
             struct Queue *queue;
-            int count = 0;
+            int inputLine = 1;
             while(fgets(buf,sizeof(buf),fp)){
-                if(count == 0){
-                    //first line of the input: vertices
+                if(inputLine == 1){
                     strcpy(vertices,buf);
-                    count++;
+                    inputLine++;
                 }else{
-                    //second line of the input: edges
-                    graph = CreateGraph(vertices, buf);
+                    char *edges = buf; 
+                    graph = CreateGraph(vertices, edges);
                     CreateQueue(&queue, graph->size);
                     TopSort(&queue, &graph); 
                 }
