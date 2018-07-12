@@ -8,17 +8,15 @@ typedef struct _Bit{
 } Bit;
 
 // hash function pointer
-typedef unsigned int (*hashfunc_p)(const char*);
+typedef unsigned int (*hashfunc_t)(const char*);
 
-//Bloom Filter
 typedef struct _BloomFilters{
     int filter_size;
     int num_hashfunc;
     Bit *FilterArray;
-    hashfunc_p *funcs; //function pointer array for hash functions
+    hashfunc_t *funcs; //function pointer array for hash functions
 } BloomFilters;
 
-//Hash functions
 unsigned int Hash1 (const char *Key){
     int HashVal=0;
     for(;*Key !='\0';Key ++)
@@ -80,35 +78,34 @@ unsigned int Hash10 (const char *Key){
     return HashVal;
 } 
 
-// Bloom filter functions
 BloomFilters *CreateBloomFilter(int s, int b, int k){
     BloomFilters *filter = (BloomFilters *)(malloc(sizeof(BloomFilters)));
-    filter->filter_size = s*b;
+    filter->filter_size = s * b;
     filter->num_hashfunc = k;
-    filter->FilterArray = (Bit *)(malloc(sizeof(Bit)* filter->filter_size));
-    filter->funcs= (hashfunc_p *)(malloc(sizeof(hashfunc_p)*k));
+    filter->FilterArray = (Bit *)(malloc(sizeof(Bit) * filter->filter_size));
+    filter->funcs = (hashfunc_t *)(malloc(sizeof(hashfunc_t) * k));
     filter->funcs[0] = Hash1;
     filter->funcs[1] = Hash2;
     filter->funcs[2] = Hash3;
     filter->funcs[3] = Hash4;
     filter->funcs[4] = Hash5;
     filter->funcs[5] = Hash6;
-    //filter->funcs[6] = Hash7;
-    //filter->funcs[7] = Hash8;
-    //filter->funcs[8] = Hash9;
-    //filter->funcs[9] = Hash10;
+    filter->funcs[6] = Hash7;
+    filter->funcs[7] = Hash8;
+    filter->funcs[8] = Hash9;
+    filter->funcs[9] = Hash10;
     printf("b = %d \t k = %d\n", b, k);
     return filter;
 }
 
-//hash1~10 --> bit array index 안의 범위로 바꾸어 리턴.
+// Hash1~10 함수에서 나온 값을 bit array index 안의 범위로 바꾸기.
 int hash(BloomFilters *B, unsigned int num, char *word){
     return B->funcs[num](word) % B->filter_size;
 }
 
 void insert(BloomFilters *B, char *word){
     printf("%s\n",word);
-    for(int i=0;i<B->num_hashfunc;i++){
+    for(int i = 0;i < B->num_hashfunc;i++){
         int num = hash(B, i, word);
         B->FilterArray[num].bit = 1;
         printf("a[%d] = 1\n", num);
@@ -117,7 +114,7 @@ void insert(BloomFilters *B, char *word){
 
 void lookup(BloomFilters *B, char *key){
     int count = 0;
-    for(int i=0;i<B->num_hashfunc;i++){
+    for(int i = 0;i < B->num_hashfunc;i++){
         int num = hash(B, i, key);
         if(B->FilterArray[num].bit == 1){
             count++;
@@ -137,17 +134,17 @@ int main(int argc, const char *argv[])
         if(fp){
             char buf[20];
             int count = 0;
-            int s = 0;
+            int inputNum = 0;
             BloomFilters *filter;
             while(fgets(buf, sizeof(buf), fp)){
                 if(count == 0){
-                    s = buf[0] - 48;
+                    inputNum = buf[0] - 48;
                     int e = 0.01;
                     int b = 1.44 * log(100) / log(2);
                     int k = 0.693 * b;
-                    filter = CreateBloomFilter(s,b,k);
+                    filter = CreateBloomFilter(inputNum,b,k);
                     count++;
-                }else if(count < s+1){
+                }else if(count < inputNum + 1){
                     buf[strlen(buf) - 1] = '\0';
                     insert(filter, buf);
                     count++;
