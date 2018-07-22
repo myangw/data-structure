@@ -2,8 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-
-#define INF 99999999;
+#include <limits.h>
 
 struct Node {
     int vertexNo;
@@ -23,22 +22,14 @@ struct AdjMatrix {
     int **matrix;
 };
 
-int IsFull(struct PQueue **Q){
-    if((*Q)->size >= (*Q)->capacity){
-        return 1;
-    }else{
-        return 0;
-    }
-}
-
-int MinInThree(struct PQueue **Q, int parent){
+int MinInThree(struct PQueue *Q, int parent){
     int min;
-    if((*Q)->queue[parent * 2].d > (*Q)->queue[parent * 2 + 1].d){
+    if(Q->queue[parent * 2].d > Q->queue[parent * 2 + 1].d){
         min = parent * 2;
     }else{
         min = parent * 2 + 1;
     }
-    if((*Q)->queue[parent].d > (*Q)->queue[min].d){
+    if(Q->queue[parent].d > Q->queue[min].d){
         min = parent;
     }
     return min;
@@ -50,35 +41,35 @@ void Swap(struct Node *a, struct Node *b){
     *b = tmp;
 }
 
-void HeapifyUpward(struct PQueue **Q, int nodeIdx){
+void HeapifyUpward(struct PQueue *Q, int nodeIdx){
     int parent = nodeIdx / 2;
-    if(parent > 0 && (*Q)->queue[parent].d > (*Q)->queue[nodeIdx].d){
+    if(parent > 0 && Q->queue[parent].d > Q->queue[nodeIdx].d){
         //Swap 이런식으로 해도 되는건가? 
-        Swap(&((*Q)->queue[parent]), &((*Q)->queue[nodeIdx]));
+        Swap(&(Q->queue[parent]), &(Q->queue[nodeIdx]));
         HeapifyUpward(Q, parent);
     }
 }
 
-void HeapifyDownward(struct PQueue **Q){
-    for(int parent = 1; parent <= ((*Q)->size) / 2; parent *= 2){
+void HeapifyDownward(struct PQueue *Q){
+    for(int parent = 1; parent <= (Q->size) / 2; parent *= 2){
         int minIdx = MinInThree(Q, parent);
-        if((*Q)->queue[parent].d != (*Q)->queue[minIdx].d){
-            Swap(&((*Q)->queue[parent]), &((*Q)->queue[minIdx]));
+        if(Q->queue[parent].d != Q->queue[minIdx].d){
+            Swap(&(Q->queue[parent]), &(Q->queue[minIdx]));
         }else{
             return;
         }
     }
 }
 
-struct Node PopMin(struct PQueue **Q){
-    if((*Q)->size == 0){
+struct Node PopMin(struct PQueue *Q){
+    if(Q->size == 0){
         printf("Delete fail: Empty priority Queue.\n");
     }else{
-        struct Node minNode = (*Q)->queue[1];
-        (*Q)->queue[1].d = (*Q)->queue[(*Q)->size].d;
-        (*Q)->queue[1].pred = (*Q)->queue[(*Q)->size].pred;
-        (*Q)->queue[1].vertexNo = (*Q)->queue[(*Q)->size].vertexNo;
-        (*Q)->size -= 1;
+        struct Node minNode = Q->queue[1];
+        Q->queue[1].d = Q->queue[Q->size].d;
+        Q->queue[1].pred = Q->queue[Q->size].pred;
+        Q->queue[1].vertexNo = Q->queue[Q->size].vertexNo;
+        Q->size -= 1;
         HeapifyDownward(Q);
         return minNode;
     }
@@ -90,25 +81,23 @@ struct PQueue *CreatePQ(struct AdjMatrix *adjMatrix) {
     PQ->size = adjMatrix->numVertex;
     PQ->queue = (struct Node *)malloc(sizeof(struct Node) * PQ->capacity + 1);
     for(int i = 1; i <= PQ->capacity; i++) {
-        PQ->queue[i].d = INF;
+        PQ->queue[i].d = INT_MAX;
         PQ->queue[i].pred = NULL;
         PQ->queue[i].vertexNo = i;
     }
     return PQ;
 }
 
-void PrintPQueue(struct PQueue **Q){
-    if((*Q)->size == 0){
+void PrintPQueue(struct PQueue *Q){
+    if(Q->size == 0){
         printf("Empty.\n");
     }else{
-        for(int i = 1; i < (*Q)->size + 1; i++){
-            printf("%d  ", (*Q)->queue[i].d);
+        for(int i = 1; i < Q->size + 1; i++){
+            printf("%d  ", Q->queue[i].d);
         }
-        printf(";;\n");
     }
 }
 
-// TODO: Find good name
 int GetNumInputUnit(char *buf, int len)
 {
     int size = 0;
@@ -153,15 +142,15 @@ void PrintMatrix(int **matrix) {
     }
 }
 
-void Relaxation(struct PQueue *Q, struct AdjMatrix *adjMatrix, int visitingVertex){
+void Relax(struct PQueue *Q, struct AdjMatrix *adjMatrix, int visitingVertex){
     for(int i = 1;i < adjMatrix->numVertex + 1; i++){
         if(adjMatrix->matrix[visitingVertex][i] != 0){
             if(Q->queue[visitingVertex].d + adjMatrix->matrix[visitingVertex][i] < Q->queue[i].d){
                 Q->queue[i].d = Q->queue[visitingVertex].d + adjMatrix->matrix[visitingVertex][i];
                 Q->queue[i].pred = &(Q->queue[visitingVertex]);
-                HeapifyUpward(&Q, i);
+                HeapifyUpward(Q, i);
                 printf("\nafter relaxation: ");
-                PrintPQueue(&Q);
+                PrintPQueue(Q);
             }
         }
     }
@@ -193,10 +182,10 @@ void RunDijkstra(struct AdjMatrix *adjMatrix, struct PQueue *Q, int start, int e
     int visiting = start;
     Q->queue[visiting].d = 0;
     while(1){
-        HeapifyUpward(&Q, visiting);
-        struct Node popped = PopMin(&Q);
+        HeapifyUpward(Q, visiting);
+        struct Node popped = PopMin(Q);
         visiting = popped.vertexNo;
-        Relaxation(Q, adjMatrix, visiting);
+        Relax(Q, adjMatrix, visiting);
         
         if(count > adjMatrix->numVertex - 1){
             PrintShortestPath(start, end, &popped);
