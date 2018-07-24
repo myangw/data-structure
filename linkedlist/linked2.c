@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-struct NODE{ 
+struct NODE { 
     int element;
     struct NODE *next;
 };
 
-struct NODE *CreateNode(int element){
+struct NODE *CreateNode(int element) {
     struct NODE *pos = malloc(sizeof(struct NODE));
     pos->element = element;
     pos->next = NULL;
@@ -14,28 +14,28 @@ struct NODE *CreateNode(int element){
     return pos; 
 }
 
-struct NODE *MakeEmpty(struct NODE *list){
+struct NODE *MakeEmpty(struct NODE *list) {
     struct NODE *pos = list->next;
     struct NODE *tmp;
-    while(pos->next == NULL){
+    while (pos->next == NULL) {
         tmp = pos;
         pos = pos->next;
         free(tmp);
     }
 }
 
-int IsEmpty(struct NODE *list){
+int IsEmpty(struct NODE *list) { 
    return list->next == NULL;
 }
 
-int IsLast(struct NODE *pos){
+int IsLast(struct NODE *pos) {
     return pos->next == NULL;
 }
 
-struct NODE *Find(int element, struct NODE *list){
+struct NODE *Find(int element, struct NODE *list) {
     struct NODE *pos = list;
-    while(pos != NULL){
-        if(element == pos->element){
+    while (pos != NULL) {
+        if (element == pos->element) {
             break;
         }
         pos = pos->next;
@@ -43,18 +43,18 @@ struct NODE *Find(int element, struct NODE *list){
     return pos;
 }
 
-void Insert(int element, struct NODE *list, int prev){
+void Insert(int element, int prev, struct NODE *list) {
     struct NODE *pos = Find(prev, list);
-    if(pos == NULL){
-        printf("Insertion(%d) failed: element %d is not in the list\n",element,prev);
-    }else{
+    if (pos == NULL) {
+        printf("Insertion(%d) failed: element %d is not in the list\n", element, prev);
+    } else {
         struct NODE *new = CreateNode(element);
         new->next = pos->next;
         pos->next = new;
     }   
 }
 
-void Delete(int element, struct NODE *list){
+void Delete(int element, struct NODE *list) {
     struct NODE *del = Find(element, list);
     if(del == NULL){
         printf("Deletion failed: element %d is not in the list\n", element);
@@ -68,88 +68,90 @@ void Delete(int element, struct NODE *list){
     }   
 }
 
-void FindPrevious(int element, struct NODE *list){
+void FindPrevious(int element, struct NODE *list) {
     struct NODE *pos = list;
     struct NODE *prev;
-    while(pos->element != element && pos->next != NULL){
+    while (pos->element != element && pos->next != NULL) {
         prev = pos;
         pos = pos->next;
     }
-    if(pos->element == element){
+    if (pos->element == element) {
         int prevElement = prev->element;
-        if(prevElement != -1){
-            printf("Key of previous node of %d is %d.\n",pos->element,prevElement);
-        }else{
-            printf("Key of previous node of %d is header.\n",element);
+        if (prevElement != -1) {
+            printf("Key of previous node of %d is %d.\n", pos->element, prevElement);
+        } else {
+            printf("Key of previous node of %d is header.\n", element);
         }
-    }else{
-        printf("Could not find %d in the list.\n",element);
+    } else {
+        printf("Could not find %d in the list.\n", element);
     }
 }
 
-void PrintAll(struct NODE *list){
+void PrintListNodes(struct NODE *list) {
     struct NODE *pos = list->next;
-    while(pos != NULL){
+    while (pos != NULL) {
         printf("key: %d \t",pos->element);
         pos = pos->next;
     }
     printf("\n");
 }
 
-void FreeAll(struct NODE *list){
+void FreeListNodes(struct NODE *list) {
     struct NODE *pos = list;
     struct NODE *freeNode;
-    while(pos != NULL){
+    while (pos != NULL) {
         freeNode = pos;
         pos = pos->next;
         free(freeNode);
     }
 }
-void ReadFile(FILE* ifs, struct NODE *list){
-   char str_read[8];
-   char func;
-   if(ifs == NULL){
+
+void ReadFile(FILE* fp, struct NODE *list) {
+   char buf[8];
+   char command;
+   if (fp == NULL) {
         fprintf(stderr,"cannot open the file\n");
         exit(EXIT_FAILURE);
    }
-   while(!feof(ifs)){
-        fgets(str_read, 8, ifs);
-        func = str_read[0];
+   while (!feof(fp)) {
+        fgets(buf, 8, fp);
+        command = buf[0];
         int element;
         int prev;
-        switch(func){
+        switch (command) {
             case 'i': 
-                sscanf(str_read, "%*c %d %d", &element, &prev);
-                Insert(element,list,prev); 
+                sscanf(buf, "%*c %d %d", &element, &prev);
+                Insert(element, prev, list); 
                 break;
             case 'd': 
-                sscanf(str_read, "%*c %d", &element);
-                Delete(element,list); 
+                sscanf(buf, "%*c %d", &element);
+                Delete(element, list); 
                 break;
             case 'f': 
-                sscanf(str_read, "%*c %d", &element);
-                FindPrevious(element,list); 
+                sscanf(buf, "%*c %d", &element);
+                FindPrevious(element, list); 
                 break;
             case 'p': 
-                PrintAll(list); 
+                PrintListNodes(list); 
                 break;
         }
     }
-    fclose(ifs);
+    fclose(fp);
 
 }
-int main(int argc, const char *argv[]){
+
+int main(int argc, const char *argv[]) {
     struct NODE *list;
     list = CreateNode(-1);
 
     //Read input from txt file.
-    FILE* ifs;
-    ifs = fopen(argv[1], "rt");
-    if(argc ==2){
-        ReadFile(ifs, list);       
-    }else{
+    FILE* fp;
+    fp = fopen(argv[1], "rt");
+    if (argc == 2) {
+        ReadFile(fp, list);       
+    } else {
         printf("wrong execution: put an argument file");
     }
-    FreeAll(list);
+    FreeListNodes(list);
     return 0;
 }
