@@ -5,8 +5,8 @@
 #include <limits.h>
 
 struct Node {
-    int vertexNo;
-    struct Node *pred; //previous node in the path
+    int vertex_no;
+    int pred; //previous node in the path
     int d; //distance
 };
 
@@ -18,88 +18,81 @@ struct PQueue {
 };
 
 struct AdjMatrix {
-    int numVertex;
+    int num_vertex;
     int **matrix;
 };
 
-int MinInThree(struct PQueue *Q, int parent){
-    int min;
-    if(Q->queue[parent * 2].d > Q->queue[parent * 2 + 1].d){
+int MinInThree(struct PQueue *Q, int parent) {
+    int min = parent;
+    if (Q->queue[min].d > Q->queue[parent * 2].d) {
         min = parent * 2;
-    }else{
-        min = parent * 2 + 1;
     }
-    if(Q->queue[parent].d > Q->queue[min].d){
-        min = parent;
+    if (Q->queue[min].d > Q->queue[parent * 2 + 1].d) {
+        min = parent * 2 + 1;
     }
     return min;
 }
 
-void Swap(struct Node *a, struct Node *b){
+void Swap(struct Node *a, struct Node *b) {
     struct Node tmp = *a;
     *a = *b;
     *b = tmp;
 }
 
-void HeapifyUpward(struct PQueue *Q, int nodeIdx){
-    int parent = nodeIdx / 2;
-    if(parent > 0 && Q->queue[parent].d > Q->queue[nodeIdx].d){
-        //Swap 이런식으로 해도 되는건가? 
-        Swap(&(Q->queue[parent]), &(Q->queue[nodeIdx]));
+void HeapifyUpward(struct PQueue *Q, int node_idx) {
+    int parent = node_idx / 2;
+    if (parent > 0 && Q->queue[parent].d > Q->queue[node_idx].d) {
+        Swap(&(Q->queue[parent]), &(Q->queue[node_idx]));
         HeapifyUpward(Q, parent);
     }
 }
 
-void HeapifyDownward(struct PQueue *Q){
-    for(int parent = 1; parent <= (Q->size) / 2; parent *= 2){
+void HeapifyDownward(struct PQueue *Q) {
+    for (int parent = 1; (parent * 2 + 1) <= (Q->size); parent *= 2) {
         int minIdx = MinInThree(Q, parent);
-        if(Q->queue[parent].d != Q->queue[minIdx].d){
+        if (Q->queue[parent].d != Q->queue[minIdx].d) {
             Swap(&(Q->queue[parent]), &(Q->queue[minIdx]));
-        }else{
+        } else {
             return;
         }
     }
 }
 
-struct Node PopMin(struct PQueue *Q){
-    if(Q->size == 0){
-        printf("Delete fail: Empty priority Queue.\n");
-    }else{
+struct Node PopMin(struct PQueue *Q) {
+    if (Q->size == 0) {
+        return Q->queue[0];
+    } else {
         struct Node minNode = Q->queue[1];
-        Q->queue[1].d = Q->queue[Q->size].d;
-        Q->queue[1].pred = Q->queue[Q->size].pred;
-        Q->queue[1].vertexNo = Q->queue[Q->size].vertexNo;
+        Swap(&(Q->queue[1]), &(Q->queue[Q->size]));
         Q->size -= 1;
         HeapifyDownward(Q);
         return minNode;
     }
 }
 
-struct PQueue *CreatePQ(struct AdjMatrix *adjMatrix) {
+struct PQueue *CreatePQ(struct AdjMatrix *adj_matrix) {
     struct PQueue *PQ = (struct PQueue *)malloc(sizeof(struct PQueue));
-    PQ->capacity = adjMatrix->numVertex;
-    PQ->size = adjMatrix->numVertex;
-    PQ->queue = (struct Node *)malloc(sizeof(struct Node) * PQ->capacity + 1);
-    for(int i = 1; i <= PQ->capacity; i++) {
+    PQ->capacity = adj_matrix->num_vertex;
+    PQ->size = adj_matrix->num_vertex;
+    PQ->queue = (struct Node *)malloc(sizeof(struct Node) * (PQ->capacity + 1));
+    for (int i = 0; i <= PQ->capacity; i++) {
+        PQ->queue[i].vertex_no = i;
+        PQ->queue[i].pred = 0;
         PQ->queue[i].d = INT_MAX;
-        PQ->queue[i].pred = NULL;
-        PQ->queue[i].vertexNo = i;
     }
     return PQ;
 }
 
-void PrintPQueue(struct PQueue *Q){
-    if(Q->size == 0){
-        printf("Empty.\n");
-    }else{
-        for(int i = 1; i < Q->size + 1; i++){
-            printf("%d  ", Q->queue[i].d);
-        }
+//create an array that its index indicates vertex_no.
+struct Node *CreateIdxArray(struct PQueue *Q) {
+    struct Node *idxArray = (struct Node *)malloc(sizeof(struct Node) * (Q->size + 1));
+    for (int i = 1; i < (Q->size) + 1; i++) {
+        idxArray[i] = Q->queue[i];
     }
+    return idxArray;
 }
 
-int GetNumInputUnit(char *buf, int len)
-{
+int GetNumInputUnit(char *buf, int len) {
     int size = 0;
     for (int i = 0; i < len; i++) {
         if (buf[i] == '\n' || buf[i] == '\0') {
@@ -113,129 +106,138 @@ int GetNumInputUnit(char *buf, int len)
     return size;
 }
 
-void InitializeMatrix(struct AdjMatrix *adjMatrix, FILE *fp) {
+void InitializeMatrix(struct AdjMatrix *adj_matrix, FILE *fp) {
     int start, end, distance;
     while (!feof(fp)) {
         fscanf(fp, "%d%*c%d%*c%d ", &start, &end, &distance);
-        adjMatrix->matrix[start][end] = distance;
+        adj_matrix->matrix[start][end] = distance;
     }
 }
 
 struct AdjMatrix *CreateAdjMatrix(FILE *fp) {
     char buf[128];
     fgets(buf, sizeof(buf), fp);
-    struct AdjMatrix *adjMatrix = (struct AdjMatrix *)malloc(sizeof(struct AdjMatrix));
-    adjMatrix->numVertex = GetNumInputUnit(buf, sizeof(buf));
-    adjMatrix->matrix = (int **)malloc(sizeof(int *) * adjMatrix->numVertex + 1);
-    for (int i = 0; i < adjMatrix->numVertex + 1; i++) {
-        adjMatrix->matrix[i] = (int *)malloc(sizeof(int) * adjMatrix->numVertex + 1);
+    struct AdjMatrix *adj_matrix = (struct AdjMatrix *)malloc(sizeof(struct AdjMatrix));
+    adj_matrix->num_vertex = GetNumInputUnit(buf, sizeof(buf));
+    adj_matrix->matrix = (int **)malloc(sizeof(int *) * (adj_matrix->num_vertex + 1));
+    
+    for (int i = 0; i < adj_matrix->num_vertex + 1; i++) {
+        adj_matrix->matrix[i] = (int *)malloc(sizeof(int) * (adj_matrix->num_vertex + 1));
     }
-    return adjMatrix;
+    return adj_matrix;
 }
 
-void PrintMatrix(int **matrix) {
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            printf("%3d ", matrix[i][j]);
-        }
-        printf("\n");
+int FindQueueIdx(struct PQueue *Q, int vertex_no) {
+    for (int i = 1; i < Q->size + 1; i++) {
+        if (Q->queue[i].vertex_no == vertex_no)
+            return i;
     }
 }
 
-void Relax(struct PQueue *Q, struct AdjMatrix *adjMatrix, int visitingVertex){
-    for(int i = 1;i < adjMatrix->numVertex + 1; i++){
-        if(adjMatrix->matrix[visitingVertex][i] != 0){
-            if(Q->queue[visitingVertex].d + adjMatrix->matrix[visitingVertex][i] < Q->queue[i].d){
-                Q->queue[i].d = Q->queue[visitingVertex].d + adjMatrix->matrix[visitingVertex][i];
-                Q->queue[i].pred = &(Q->queue[visitingVertex]);
-                HeapifyUpward(Q, i);
-                printf("\nafter relaxation: ");
-                PrintPQueue(Q);
+void Relax (struct PQueue *Q, 
+            struct AdjMatrix *adj_matrix, 
+            struct Node *idxArray, 
+            int visiting_vertex) {
+    for (int i = 1; i < adj_matrix->num_vertex + 1; i++) {
+        if (adj_matrix->matrix[visiting_vertex][i] != 0) {
+            if (idxArray[visiting_vertex].d + adj_matrix->matrix[visiting_vertex][i] < idxArray[i].d) {
+                int idx = FindQueueIdx(Q, i);
+                idxArray[i].d = idxArray[visiting_vertex].d + adj_matrix->matrix[visiting_vertex][i];
+                Q->queue[idx].d = idxArray[visiting_vertex].d + adj_matrix->matrix[visiting_vertex][i];
+                idxArray[i].pred = idxArray[visiting_vertex].vertex_no;
+                Q->queue[idx].pred = idxArray[visiting_vertex].vertex_no;
+                HeapifyUpward(Q, idx);
             }
         }
     }
 }
 
-void PrintShortestPath(int start, int end, struct Node *popped){
-    struct Node *nextNode;
+void PrintShortestPath(int start, struct PQueue *Q, struct Node *idxArray, struct Node end_node){
+    struct Node nextNode = end_node;
     int count = 0;
-    int pathVertexes[7] = {0, };
-    while(1){
-        if(popped->pred){
-            if(popped->vertexNo == start)
+    int path_vertexes[7] = {0, };
+    while (1) {
+        if (nextNode.pred != 0 || nextNode.vertex_no == start) {
+            path_vertexes[count] = nextNode.vertex_no;
+            if (nextNode.vertex_no == start)
                 break;
-            pathVertexes[count] = popped->vertexNo;
-            nextNode = popped->pred;
-        }else{
-            printf("Nowhere to go end:%d\n", end);
+            nextNode = idxArray[nextNode.pred];
+            count++;
+        } else {
+            printf("Nowhere to go.\n");
             return;
         }
-        count++;
     }
-    for(int i = count; i <= 0; i--){
-        printf("%d ", pathVertexes[i]);
+    for (int i = count; i >= 0; i--) {
+        printf("%d ", path_vertexes[i]);
     }
 }
  
-void RunDijkstra(struct AdjMatrix *adjMatrix, struct PQueue *Q, int start, int end){
+void RunDijkstra(struct AdjMatrix *adj_matrix, 
+                 struct PQueue *Q, 
+                 struct Node *idxArray, 
+                 int start, 
+                 int end) {
     int count = 1;
+    struct Node end_node = Q->queue[0];
     int visiting = start;
     Q->queue[visiting].d = 0;
-    while(1){
-        HeapifyUpward(Q, visiting);
+    idxArray[visiting].d = 0;
+    Swap(&(Q->queue[visiting]), &(Q->queue[1]));
+    
+    while (1) {
+        visiting = Q->queue[1].vertex_no;
+        Relax(Q, adj_matrix, idxArray, visiting);
         struct Node popped = PopMin(Q);
-        visiting = popped.vertexNo;
-        Relax(Q, adjMatrix, visiting);
-        
-        if(count > adjMatrix->numVertex - 1){
-            PrintShortestPath(start, end, &popped);
+        if (popped.vertex_no == end)
+            end_node = popped;
+        if (Q->size == 0)
             break;
-        }
         count++;
     }
-}
-void DisposeAdjMatrix(struct AdjMatrix *adjMatrix){
-    for(int i = 0; i < adjMatrix->numVertex + 1; i++){
-        free(adjMatrix->matrix[i]);
-    }
-    free(adjMatrix->matrix);
-    free(adjMatrix);
+    PrintShortestPath(start, Q, idxArray, end_node);
 }
 
-void DisposePQueue(struct PQueue *PQ){
+void DisposeAdjMatrix(struct AdjMatrix *adj_matrix) {
+    for (int i = 0; i < adj_matrix->num_vertex + 1; i++) {
+        free(adj_matrix->matrix[i]);
+    }
+    free(adj_matrix->matrix);
+    free(adj_matrix);
+}
+
+void DisposePQueue(struct PQueue *PQ) {
     free(PQ->queue);
     free(PQ);
 }
 
 int main(int argc, const char *argv[]) {
-    if(argc == 2) {
+    if (argc == 2) {
         FILE *fp = fopen(argv[1], "r");
-        if(fp == NULL) {
+        if (fp == NULL) {
             printf("Execute with an input file. \n");
             return 0;
         }
-
-        struct AdjMatrix *adjMatrix = CreateAdjMatrix(fp);
-        InitializeMatrix(adjMatrix, fp);
+        struct AdjMatrix *adj_matrix = CreateAdjMatrix(fp);
+        InitializeMatrix(adj_matrix, fp);
         struct PQueue *PQ = NULL;
-        
+        struct Node *idxArray = NULL;
         int start = 0;
         int end = 0;
         char restart = 'Y';
-        while(restart == 'Y'){
+        while (restart == 'Y') {
             printf("Start : ");
             scanf("%d", &start);
             printf("End : ");
             scanf("%d", &end);
-            
-            PQ = CreatePQ(adjMatrix);
-            RunDijkstra(adjMatrix, PQ, start, end);
-            DisposeAdjMatrix(adjMatrix);
-            //DisposePQueue(PQ);
-            
+            PQ = CreatePQ(adj_matrix);
+            idxArray = CreateIdxArray(PQ);
+
+            RunDijkstra(adj_matrix, PQ, idxArray, start, end);   
             printf("\nrestart? (Y/N) :");
             scanf("%*c%c", &restart);
-        }   
+        }
+        DisposeAdjMatrix(adj_matrix);
+        DisposePQueue(PQ);
     }
 }
-
